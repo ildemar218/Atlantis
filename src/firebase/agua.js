@@ -71,7 +71,7 @@ const calcularConsumoLavadora = (
     litrosPorCarga *= 1.5; // penalización por media carga
   }
 
-  return vecesPorSemana * litrosPorCarga;
+  return parseFloat(((vecesPorSemana * litrosPorCarga) / 7).toFixed(2));
 };
 
 export async function promedioLavadora(usuarioId,  vecesPorSemana,
@@ -157,7 +157,7 @@ const calcularConsumoRiego = (vecesPorSemana, metodoRiego, minutos) => {
   else if (metodoRiego === "regadera") litrosPorMinuto = 10;
   else if (metodoRiego === "automatico") litrosPorMinuto = 6;
 
-  return vecesPorSemana * minutos * litrosPorMinuto;
+  return parseFloat(((vecesPorSemana * minutos * litrosPorMinuto) / 7).toFixed(2));
 };
 
 export async function promedioRiegoPlantas(usuarioId,  vecesPorSemana, metodoRiego, minutos) {
@@ -202,7 +202,7 @@ const calcularConsumoLimpieza = (vecesPorSemana, areas, metodoLimpieza) => {
 
   let totalLitrosPorLimpieza = areas.reduce((acc, area) => acc + (litrosPorArea[area] || 0), 0);
 
-  return vecesPorSemana * totalLitrosPorLimpieza * factor;
+  return parseFloat(((vecesPorSemana * totalLitrosPorLimpieza * factor) / 7).toFixed(2));
 };
 
 
@@ -233,6 +233,45 @@ export async function promedioLimpieza(usuarioId,  vecesPorSemana, areas, metodo
     }
   } catch (error) {
     console.error("Error al verificar o crear el consumo promedio de limpieza", error);
+  }
+}
+
+export async function calcularPromedioGeneral(usuarioId) {
+  try {
+    const promediosRef = collection(db, `Usuarios/${usuarioId}/promedios_consumo`);
+    const fechaHoy = new Date().toISOString().split("T")[0];
+
+    const q = query(promediosRef, where("fecha", "==", fechaHoy));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      console.log("No hay documento de promedio para hoy.");
+      return;
+    }
+
+    const docSnap = snapshot.docs[0];
+    const docRef = docSnap.ref;
+    const data = docSnap.data();
+
+    const valores = Object.entries(data)
+      .filter(([key]) => key.startsWith("promedio_consumo_"))
+      .map(([_, value]) => value);
+
+    if (valores.length === 0) {
+      console.log("No se encontraron valores de consumo para calcular el promedio general.");
+      return;
+    }
+
+    const suma = valores.reduce((acc, val) => acc + val, 0);
+    const promedioGeneral = suma / valores.length;
+
+    await updateDoc(docRef, {
+      promedio_general: promedioGeneral,
+    });
+
+    console.log("Promedio general actualizado:", promedioGeneral);
+  } catch (error) {
+    console.error("Error al calcular el promedio general:", error);
   }
 }
 
