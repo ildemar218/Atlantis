@@ -1,10 +1,8 @@
-import { auth, db } from './config' //llamamos la autentificacion y la base de datos
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, browserLocalPersistence,setPersistence, updateProfile  } from 'firebase/auth'//trae las funciones propias de firebase
+import { auth, db } from './config'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, browserLocalPersistence, setPersistence, updateProfile } from 'firebase/auth'
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
 
 export const AuthService = {
-  // Función auxiliar para capitalizar el nombre 
-  //capitalizar poner la primera letra en mayuscula y el resto en minuscula
   capitalizeUsername(username) {
     if (!username || username.trim().length === 0) {
       throw new Error("El nombre de usuario no puede estar vacío.");
@@ -16,11 +14,10 @@ export const AuthService = {
       .join(' ');
   },
 
-  // Verificar si el nombre de usuario ya existe
   async isUsernameTaken(username) {
     try {
-      const usersRef = collection(db, 'jugadores')
-      const q = query(usersRef, where('nombre', '==', this.capitalizeUsername(username)))
+      const usersRef = collection(db, 'usuarios')
+      const q = query(usersRef, where('nombre_completo', '==', this.capitalizeUsername(username)))
       const querySnapshot = await getDocs(q)
       return !querySnapshot.empty
     } catch (error) {
@@ -29,13 +26,9 @@ export const AuthService = {
     }
   },
 
-  // Registro de usuario solo sirve para registrar
   async register({ email, password, userData }) {
     try {
-      // Capitalizamos el nombre antes de verificar
       const capitalizedName = this.capitalizeUsername(userData.nombre)
-      
-      // Verificamos si el nombre ya existe
       const isNameTaken = await this.isUsernameTaken(userData.nombre)
       if (isNameTaken) {
         return {
@@ -46,15 +39,15 @@ export const AuthService = {
       }
 
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-      //Agregar el nombre al perfil del usuario
+
       await updateProfile(userCredential.user, {
         displayName: capitalizedName
-      })  
-      // Guardamos el perfil del usuario en una coleccion de Firestore
-      await this.createUserProfile(userCredential.user.uid, { 
+      })
+
+      await this.createUserProfile(userCredential.user.uid, {
         ...userData,
         nombre: capitalizedName,
-        email 
+        email
       })
 
       return {
@@ -66,10 +59,9 @@ export const AuthService = {
     }
   },
 
-  // Login de usuario
   async login({ email, password }) {
     try {
-      await setPersistence(auth, browserLocalPersistence); // Mantener la sesión en el navegador
+      await setPersistence(auth, browserLocalPersistence)
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       const userProfile = await this.getUserProfile(userCredential.user.uid)
       return {
@@ -82,7 +74,6 @@ export const AuthService = {
     }
   },
 
-  // Cerrar sesión
   async logout() {
     try {
       await signOut(auth)
@@ -92,13 +83,11 @@ export const AuthService = {
     }
   },
 
-  // Mantener la sesión del usuario
   onAuthStateChange(callback) {
     try {
       return onAuthStateChanged(auth, async (user) => {
         if (user) {
           const userProfile = await this.getUserProfile(user.uid)
-          // Si el usuario tiene un perfil, lo pasamos al callback
           callback({ user, profile: userProfile, loggedIn: true })
         } else {
           callback({ user: null, profile: null, loggedIn: false })
@@ -110,13 +99,21 @@ export const AuthService = {
     }
   },
 
-  // Crear perfil de usuario en Firestore
   async createUserProfile(userId, userData) {
     try {
-      await setDoc(doc(db, 'jugadores', userId), {
-        ...userData,
-        // createdAt: new Date().toISOString()
-      })
+      const profile = {
+        nombre_completo: this.capitalizeUsername(userData.nombre),
+        email: userData.email,
+        fecha_registro: new Date().toISOString(),
+        id_usuario: userId,
+        // Agrega cualquier otro dato personalizado aquí
+        ...userData
+      }
+
+      delete profile.nombre // eliminar el campo original si existe
+
+      await setDoc(doc(db, 'Usuarios', userId), profile)
+
       return { success: true }
     } catch (error) {
       console.error('Error creating user profile:', error)
@@ -124,15 +121,13 @@ export const AuthService = {
     }
   },
 
-  // Devuelve el usuario actual si está autenticado
   async getCurrentUser() {
     return auth.currentUser;
   },
 
-  // Obtener perfil de usuario
   async getUserProfile(userId) {
     try {
-      const userDoc = await getDoc(doc(db, 'jugadores', userId))
+      const userDoc = await getDoc(doc(db, 'Usuarios', userId))
       return userDoc.exists() ? userDoc.data() : null
     } catch (error) {
       console.error('Error obteniendo el perfil del usuario:', error)
@@ -140,7 +135,6 @@ export const AuthService = {
     }
   },
 
-  // Manejador de errores de autenticación
   handleAuthError(error) {
     const errorMessages = {
       'auth/email-already-in-use': 'Este correo ya está registrado',
