@@ -293,6 +293,7 @@ export async function calcularGastosEstimados(usuarioId, estrato) {
       return;
     }
     const tarifaPorLitro = tarifaData.tarifa_por_litro;
+    const porcentajeAplicado = tarifaData.porcentaje_aplicado;
     console.log(`Tarifa obtenida para estrato ${estrato}: ${tarifaPorLitro} por litro.`);
 
     // 2. Obtener los promedios de consumo del usuario para hoy
@@ -324,13 +325,15 @@ export async function calcularGastosEstimados(usuarioId, estrato) {
       if (key.startsWith("promedio_consumo_") && typeof value === 'number') {
         seEncontraronConsumos = true;
         const nombreConsumo = key.replace("promedio_consumo_", "").replace(/_/g, " "); // Ej: "ducha", "lavar ropa"
-        const gastoEstimado = ((value * 30) * (tarifaPorLitro * 1000));
+        const gastoEstimado = ((value * 30) * (tarifaPorLitro * 1000)) * porcentajeAplicado;
         
-        console.log("Tarifa: ", tarifaPorLitro * 1000)
+        
         valorTotal += parseFloat(gastoEstimado)
 
         console.log(`Gasto estimado ${nombreConsumo}: ${gastoEstimado.toFixed(2)}`);
         console.log("Litros totales:", value * 30)
+        console.log("Tarifa: ", tarifaPorLitro * 1000)
+        console.log("Porcentaje Aplicado:", porcentajeAplicado)
       }
     }
     console.log("Gasto total: ", valorTotal.toFixed(2))
