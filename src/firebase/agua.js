@@ -1,4 +1,4 @@
-import { collection, getDocs, setDoc, doc, updateDoc, query, where } from "firebase/firestore";
+import { collection, getDocs, getDoc, setDoc, doc, updateDoc, query, where } from "firebase/firestore";
 import { db } from "./config.js"; // asegúrate de que tu archivo firebase.js exporte `db`
 
 /**
@@ -263,7 +263,7 @@ export async function calcularPromedioGeneral(usuarioId) {
     }
 
     const suma = valores.reduce((acc, val) => acc + val, 0);
-    const promedioGeneral = suma / valores.length;
+    const promedioGeneral = suma;
 
     await updateDoc(docRef, {
       promedio_general: promedioGeneral,
@@ -275,6 +275,74 @@ export async function calcularPromedioGeneral(usuarioId) {
   }
 }
 
+export async function calcularGastosEstimados(usuarioId, estrato) {
+  try {
+    // 1. Obtener la tarifa por litro para el estrato dado
+    const tarifaDocRef = doc(db, `tarifas_por_litro/estrato${estrato}`);
+    const tarifaDocSnap = await getDoc(tarifaDocRef);
+    console.log(`estrato${estrato}`)
+
+    if (!tarifaDocSnap.exists()) {
+      console.error(`No se encontró el documento de tarifa para el estrato ${estrato}.`);
+      return;
+    }
+
+    const tarifaData = tarifaDocSnap.data();
+    if (tarifaData === undefined || typeof tarifaData.tarifa_por_litro !== 'number') {
+      console.error(`El documento del estrato ${estrato} no contiene un campo 'tarifa_por_litro' numérico.`);
+      return;
+    }
+    const tarifaPorLitro = tarifaData.tarifa_por_litro;
+    console.log(`Tarifa obtenida para estrato ${estrato}: ${tarifaPorLitro} por litro.`);
+
+    // 2. Obtener los promedios de consumo del usuario para hoy
+    const promediosConsumoRef = collection(db, `Usuarios/${usuarioId}/promedios_consumo`);
+
+    const q = query(promediosConsumoRef);
+    const snapshotPromedios = await getDocs(q);
+
+    if (snapshotPromedios.empty) {
+      console.log(`No se encontró documento de promedios de consumo para el usuario ${usuarioId} en la fecha ${fechaHoy}.`);
+      return;
+    }
+
+    // Asumimos que solo hay un documento de promedios por día para el usuario
+    const docPromediosSnap = snapshotPromedios.docs[0];
+    const promediosData = docPromediosSnap.data();
+
+    if (!promediosData) {
+        console.log("El documento de promedios no contiene datos.");
+        return;
+    }
+
+    console.log(`\n--- Gastos Estimados para Usuario: ${usuarioId}, Estrato: ${estrato} ---`);
+
+    // 3. Calcular y mostrar el gasto estimado para cada tipo de consumo
+    let valorTotal = 0;
+    let seEncontraronConsumos = false;
+    for (const [key, value] of Object.entries(promediosData)) {
+      if (key.startsWith("promedio_consumo_") && typeof value === 'number') {
+        seEncontraronConsumos = true;
+        const nombreConsumo = key.replace("promedio_consumo_", "").replace(/_/g, " "); // Ej: "ducha", "lavar ropa"
+        const gastoEstimado = ((value * 30) * (tarifaPorLitro * 1000));
+        
+        console.log("Tarifa: ", tarifaPorLitro * 1000)
+        valorTotal += parseFloat(gastoEstimado)
+
+        console.log(`Gasto estimado ${nombreConsumo}: ${gastoEstimado.toFixed(2)}`);
+        console.log("Litros totales:", value * 30)
+      }
+    }
+    console.log("Gasto total: ", valorTotal.toFixed(2))
+
+    if (!seEncontraronConsumos) {
+        console.log("No se encontraron campos de 'promedio_consumo_' en el documento del usuario.");
+    }
+
+  } catch (error) {
+    console.error("Error al calcular los gastos estimados:", error);
+  }
+}
 
 
 

@@ -29,3 +29,6 @@ coverage
 
 *.tsbuildinfo
 src/firebase/test.js
+.firebase/hosting.ZGlzdA.cache
+firebase.json
+.firebaserc
