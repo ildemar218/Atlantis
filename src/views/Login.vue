@@ -11,6 +11,11 @@
           ¿No tienes cuenta?
           <router-link to="/register">Regístrate aquí</router-link>
         </p>
+
+         <p class="mt-3 text-center text-muted">
+          ¿Olvidaste tu contrasena?
+          <router-link to="/recover-password">Recuperar Contraseña</router-link>
+        </p>
       </div>
     </div>
   </div>

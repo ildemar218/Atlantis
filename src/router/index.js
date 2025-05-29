@@ -5,6 +5,7 @@ import RegisterView from '../views/Register.vue'
 import MainMenu from '../views/MainMenu.vue'
 import { AuthService } from '../firebase/auth'
 import { useAuthStore } from '../stores/auth'
+import RecoverPassword from '@/views/RecoverPassword.vue'
 
 
 const router = createRouter({
@@ -30,6 +31,11 @@ const router = createRouter({
       name: 'MainMenu',
       component: MainMenu,
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/recover-password',
+      name: 'RecoverPassword',
+      component: RecoverPassword
     },
   ],
 })

@@ -1,6 +1,8 @@
 import { auth, db } from './config'
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, browserLocalPersistence, setPersistence, updateProfile } from 'firebase/auth'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, browserLocalPersistence, setPersistence, updateProfile, getAuth, sendPasswordResetEmail } from 'firebase/auth'
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
+
+
 
 export const AuthService = {
   capitalizeUsername(username) {
@@ -134,6 +136,32 @@ export const AuthService = {
       throw error
     }
   },
+
+  async resetPassword(email) {
+  try {
+    // Buscar si existe algún usuario con ese email
+    const usuariosRef = collection(db, 'Usuarios')
+    const q = query(usuariosRef, where('email', '==', email))
+    const snapshot = await getDocs(q)
+
+    if (snapshot.empty) {
+      return {
+        success: false,
+        error: 'Este correo no está registrado',
+        code: 'auth/user-not-found'
+      }
+    }
+
+    // Si existe, enviar correo de restablecimiento
+    await sendPasswordResetEmail(auth, email)
+    return {
+      success: true,
+      message: 'Correo de restablecimiento enviado.'
+    }
+  } catch (error) {
+    return this.handleAuthError(error)
+  }
+},
 
   handleAuthError(error) {
     const errorMessages = {
