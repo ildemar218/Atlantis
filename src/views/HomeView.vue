@@ -1,10 +1,9 @@
-
 <script setup>
 
 import { useRouter } from "vue-router";
-import BaseTitle from "../components/atoms/BaseTitle.vue";
-import BaseButton from "../components/atoms/BaseButton.vue";
-import BaseIcon from "../components/atoms/BaseIcon.vue";
+import BaseTitle from "../assets/atoms/BaseTitle.vue";
+import BaseButton from "../assets/atoms/BaseButton.vue";
+import BaseIcon from "../assets/atoms/BaseIcon.vue";
 import atlantisIcon from '@/assets/icon.jpg';
 const router = useRouter();
 
