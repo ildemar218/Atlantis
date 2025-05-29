@@ -4,13 +4,13 @@ import { getAuth } from "firebase/auth"; //Metodos de auth de una app de firebas
 
 // Variables de entorno para la configuracion de firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyACr87suR28B20ZkC6teNpp1pHS2NQje6g",
-  authDomain: "atlantis-fa2ad.firebaseapp.com",
-  projectId: "atlantis-fa2ad",
-  storageBucket: "atlantis-fa2ad.firebasestorage.app",
-  messagingSenderId: "762393508432",
-  appId: "1:762393508432:web:a3a7ec4f5a1f675c2c2f55"
-};
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+}
 
 const app = initializeApp(firebaseConfig); // Inicializa la app de firebase con la configuracion
 const db = getFirestore(app); // Inicializa firestore database

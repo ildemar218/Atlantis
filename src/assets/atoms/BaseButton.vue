@@ -10,7 +10,7 @@
 
 <style scoped>
 .atlantis-btn {
-    background-color: #1e4361 !important;
+    background-color: #6cb9f2 !important;
     color: #fff !important;
     border: none;
     border-radius: 10px;
@@ -23,5 +23,9 @@
 .atlantis-btn:focus {
     background-color: #4bb3f4 !important;
     color: #fff !important;
+}
+
+.btn-primary {
+    background-color: #6cb9f2 !important;
 }
 </style>
